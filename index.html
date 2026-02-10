@@ -34,17 +34,17 @@
         display: grid;
         place-items: center;
         padding: 48px 16px 96px;
+        text-align: center;
       }
 
       .output {
-        background: #fff;
+        background: #ffffff;
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 28px 20px;
-        width: 100%;
         max-width: 640px;
+        width: 100%;
         box-shadow: var(--shadow);
-        text-align: center;
       }
 
       .picked {
@@ -59,7 +59,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: #fff;
+        background: #ffffff;
         border-top: 1px solid var(--border);
         padding: 12px 16px;
       }
@@ -83,7 +83,7 @@
         padding: 10px 14px;
         border: 1px solid var(--border);
         border-radius: 10px;
-        background: #fff;
+        background: #ffffff;
         cursor: pointer;
       }
 
@@ -101,15 +101,14 @@
         bottom: calc(100% + 10px);
         display: none;
         grid-auto-flow: column;
-        min-width: 420px;
         background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 12px;
         box-shadow: var(--shadow);
+        min-width: 420px;
         overflow: hidden;
       }
 
-      /* Click-controlled */
       .market-selector.open .panel {
         display: grid;
       }
@@ -129,6 +128,19 @@
         color: var(--muted);
         border-bottom: 1px solid var(--border);
         background: #f9fafb;
+      }
+
+      .search {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .search input {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
       }
 
       ul {
@@ -157,9 +169,8 @@
         font-weight: 600;
       }
 
-      .hint,
-      .lang-empty {
-        padding: 10px 12px;
+      .empty {
+        padding: 12px;
         font-size: 13px;
         color: var(--muted);
       }
@@ -179,7 +190,7 @@
         <div class="brand">Footer</div>
 
         <div class="market-selector" id="marketSelector">
-          <button class="market-button" id="marketToggle">
+          <button class="market-button" id="toggle">
             <span id="currentMarketLabel">Select market</span>
             <span class="caret"></span>
           </button>
@@ -187,14 +198,20 @@
           <div class="panel">
             <div class="col">
               <div class="col-header">Market</div>
+              <div class="search">
+                <input
+                  type="text"
+                  id="marketSearch"
+                  placeholder="Search markets…"
+                />
+              </div>
               <ul id="marketList"></ul>
-              <div class="hint">Hover a market →</div>
             </div>
 
             <div class="col">
               <div class="col-header">Language</div>
               <ul id="langList">
-                <li class="lang-empty">Pick a market on the left.</li>
+                <li class="empty">Pick a market on the left.</li>
               </ul>
             </div>
           </div>
@@ -210,14 +227,18 @@
       };
 
       const selector = document.getElementById("marketSelector");
-      const toggle = document.getElementById("marketToggle");
+      const toggle = document.getElementById("toggle");
       const marketList = document.getElementById("marketList");
       const langList = document.getElementById("langList");
       const pickedText = document.getElementById("pickedText");
       const currentMarketLabel = document.getElementById("currentMarketLabel");
+      const searchInput = document.getElementById("marketSearch");
+
+      let filteredMarkets = Object.keys(data);
 
       toggle.addEventListener("click", () => {
         selector.classList.toggle("open");
+        searchInput.focus();
       });
 
       document.addEventListener("click", (e) => {
@@ -228,12 +249,17 @@
 
       function renderMarkets() {
         marketList.innerHTML = "";
-        Object.keys(data).forEach((market) => {
+
+        if (filteredMarkets.length === 0) {
+          marketList.innerHTML = `<li class="empty">No markets found</li>`;
+          return;
+        }
+
+        filteredMarkets.forEach((market) => {
           const btn = document.createElement("button");
           btn.className = "item";
           btn.textContent = market;
 
-          // 🔹 hover controls inner menu
           btn.addEventListener("mouseenter", () => setActiveMarket(market));
           btn.addEventListener("focus", () => setActiveMarket(market));
 
@@ -270,6 +296,14 @@
           langList.appendChild(btn);
         });
       }
+
+      searchInput.addEventListener("input", (e) => {
+        const value = e.target.value.toLowerCase();
+        filteredMarkets = Object.keys(data).filter((market) =>
+          market.toLowerCase().includes(value)
+        );
+        renderMarkets();
+      });
 
       renderMarkets();
     </script>
