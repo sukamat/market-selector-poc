@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Market Selector Footer</title>
+
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --panel: #ffffff;
+        --border: #d0d5dd;
+        --text: #1f2933;
+        --muted: #667085;
+        --hover: #eef2f6;
+        --accent: #2563eb;
+        --shadow: 0 12px 30px rgba(16, 24, 40, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      main {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        padding: 48px 16px 96px;
+      }
+
+      .output {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 28px 20px;
+        width: 100%;
+        max-width: 640px;
+        box-shadow: var(--shadow);
+        text-align: center;
+      }
+
+      .picked {
+        margin-top: 14px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #fff;
+        border-top: 1px solid var(--border);
+        padding: 12px 16px;
+      }
+
+      .footer-inner {
+        max-width: 1000px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .market-selector {
+        position: relative;
+      }
+
+      .market-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .caret {
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 6px solid var(--text);
+      }
+
+      .panel {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 10px);
+        display: none;
+        grid-auto-flow: column;
+        min-width: 420px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      /* Click-controlled */
+      .market-selector.open .panel {
+        display: grid;
+      }
+
+      .col {
+        min-width: 210px;
+      }
+
+      .col + .col {
+        border-left: 1px solid var(--border);
+      }
+
+      .col-header {
+        padding: 10px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+        background: #f9fafb;
+      }
+
+      ul {
+        list-style: none;
+        padding: 6px;
+        margin: 0;
+      }
+
+      .item {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: none;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .item:hover {
+        background: var(--hover);
+      }
+
+      .item[aria-selected="true"] {
+        background: #e0e7ff;
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .hint,
+      .lang-empty {
+        padding: 10px 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <div class="output">
+        <h1>Selected market / language</h1>
+        <div class="picked" id="pickedText">Nothing selected yet.</div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <div class="brand">Footer</div>
+
+        <div class="market-selector" id="marketSelector">
+          <button class="market-button" id="marketToggle">
+            <span id="currentMarketLabel">Select market</span>
+            <span class="caret"></span>
+          </button>
+
+          <div class="panel">
+            <div class="col">
+              <div class="col-header">Market</div>
+              <ul id="marketList"></ul>
+              <div class="hint">Hover a market →</div>
+            </div>
+
+            <div class="col">
+              <div class="col-header">Language</div>
+              <ul id="langList">
+                <li class="lang-empty">Pick a market on the left.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const data = {
+        Luxembourgh: ["English", "French", "German"],
+        Japan: ["Japanese"],
+        Swiss: ["French", "German"],
+      };
+
+      const selector = document.getElementById("marketSelector");
+      const toggle = document.getElementById("marketToggle");
+      const marketList = document.getElementById("marketList");
+      const langList = document.getElementById("langList");
+      const pickedText = document.getElementById("pickedText");
+      const currentMarketLabel = document.getElementById("currentMarketLabel");
+
+      toggle.addEventListener("click", () => {
+        selector.classList.toggle("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!selector.contains(e.target)) {
+          selector.classList.remove("open");
+        }
+      });
+
+      function renderMarkets() {
+        marketList.innerHTML = "";
+        Object.keys(data).forEach((market) => {
+          const btn = document.createElement("button");
+          btn.className = "item";
+          btn.textContent = market;
+
+          // 🔹 hover controls inner menu
+          btn.addEventListener("mouseenter", () => setActiveMarket(market));
+          btn.addEventListener("focus", () => setActiveMarket(market));
+
+          marketList.appendChild(btn);
+        });
+      }
+
+      function setActiveMarket(market) {
+        [...marketList.children].forEach((b) =>
+          b.setAttribute("aria-selected", "false")
+        );
+
+        const active = [...marketList.children].find(
+          (b) => b.textContent === market
+        );
+        if (active) active.setAttribute("aria-selected", "true");
+
+        renderLanguages(market);
+      }
+
+      function renderLanguages(market) {
+        langList.innerHTML = "";
+        data[market].forEach((lang) => {
+          const btn = document.createElement("button");
+          btn.className = "item";
+          btn.textContent = lang;
+
+          btn.addEventListener("click", () => {
+            pickedText.textContent = `${market} -> ${lang}`;
+            currentMarketLabel.textContent = market;
+            selector.classList.remove("open");
+          });
+
+          langList.appendChild(btn);
+        });
+      }
+
+      renderMarkets();
+    </script>
+  </body>
+</html>
